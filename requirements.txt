@@ -1,1 +1,3 @@
 PyQt5~=5.15.10
+pyinstaller~=6.5.0
+pyuic5-tool~=0.0.1
