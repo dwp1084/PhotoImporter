@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>630</width>
-    <height>538</height>
+    <height>589</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -61,15 +61,62 @@
        <item>
         <widget class="QWidget" name="OptionsWidget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_5">
+         <layout class="QVBoxLayout" name="verticalLayout">
           <property name="spacing">
            <number>15</number>
           </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLabel" name="errorLabel">
+            <property name="palette">
+             <palette>
+              <active>
+               <colorrole role="WindowText">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>255</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </active>
+              <inactive>
+               <colorrole role="WindowText">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>255</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </inactive>
+              <disabled>
+               <colorrole role="WindowText">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>120</red>
+                  <green>120</green>
+                  <blue>120</blue>
+                 </color>
+                </brush>
+               </colorrole>
+              </disabled>
+             </palette>
+            </property>
+            <property name="text">
+             <string>ErrorText</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QWidget" name="MainOptionsWidget" native="true">
             <property name="sizePolicy">
@@ -125,7 +172,7 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QLineEdit" name="rootDirectoryPath">
+                 <widget class="QLineEdit" name="rootDirectoryPathEdit">
                   <property name="font">
                    <font>
                     <pointsize>12</pointsize>
@@ -162,7 +209,7 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QLineEdit" name="lineEdit">
+              <widget class="QLineEdit" name="projectNameEdit">
                <property name="font">
                 <font>
                  <pointsize>12</pointsize>
@@ -201,14 +248,17 @@
            </widget>
           </item>
           <item>
-           <widget class="QWidget" name="ImportTypesWidget" native="true">
+           <widget class="QWidget" name="EditedLocationWidget_2" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <layout class="QFormLayout" name="formLayout_6">
+             <property name="horizontalSpacing">
+              <number>15</number>
+             </property>
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -221,23 +271,24 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item>
-              <widget class="QCheckBox" name="jpegCheckBox">
-               <property name="text">
-                <string>Import JPEG</string>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_10">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
                </property>
-               <property name="checked">
-                <bool>true</bool>
+               <property name="text">
+                <string>SD Card Root:</string>
                </property>
               </widget>
              </item>
-             <item>
-              <widget class="QCheckBox" name="rawCheckBox">
-               <property name="text">
-                <string>Import RAW (.NEF)</string>
-               </property>
-               <property name="checked">
-                <bool>true</bool>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="sdCardRootComboBox">
+               <property name="font">
+                <font>
+                 <pointsize>12</pointsize>
+                </font>
                </property>
               </widget>
              </item>
@@ -431,6 +482,19 @@
             </layout>
            </widget>
           </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
          </layout>
         </widget>
        </item>
@@ -525,8 +589,8 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
-           <height>40</height>
+           <width>0</width>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -561,30 +625,57 @@
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <widget class="QMenu" name="menuImport">
+     <property name="title">
+      <string>Import</string>
+     </property>
+     <addaction name="actionJPEG"/>
+     <addaction name="actionRAW"/>
+    </widget>
+    <addaction name="actionRefresh"/>
+    <addaction name="menuImport"/>
+   </widget>
+   <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionNikon">
+  <action name="actionJPEG">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Nikon (.NEF)</string>
+    <string>JPEG</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a folder for JPEG files and import them from the SD card.</string>
    </property>
   </action>
-  <action name="actionCanon">
+  <action name="actionRAW">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Canon</string>
+    <string>RAW (.NEF)</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a folder for RAW files and import them from the SD card.</string>
    </property>
   </action>
-  <action name="actionSony">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionRefresh">
    <property name="text">
-    <string>Sony</string>
+    <string>Refresh</string>
+   </property>
+   <property name="toolTip">
+    <string>Refreshes tool settings.</string>
    </property>
   </action>
  </widget>
