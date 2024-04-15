@@ -17,11 +17,11 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         # Constants
-        self.subdirectoryBoxes = (
-            self.ui.editedLocationComboBox,
-            self.ui.jpegLocationComboBox,
-            self.ui.rawLocationComboBox
-        )
+        self.subdirectoryBoxes = {
+            self.ui.editedLocationComboBox: EDITED_LOC_NAME,
+            self.ui.jpegLocationComboBox: JPEG_LOC_NAME,
+            self.ui.rawLocationComboBox: RAW_LOC_NAME
+        }
 
         appConfig = (QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation) + "/PhotoImporter/config.ini")
 
@@ -51,25 +51,22 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         )
         self.ui.selectRootDirectoryButton.clicked.connect(self.searchForFolder)
         self.ui.actionRefresh.triggered.connect(lambda: self.refresh(self.ui.rootDirectoryPathEdit.text()))
+        self.comboBoxSetToSetting(self.ui.jpegLocationComboBox, JPEG_LOC_NAME)
+        self.comboBoxSetToSetting(self.ui.rawLocationComboBox, RAW_LOC_NAME)
+        self.comboBoxSetToSetting(self.ui.editedLocationComboBox, EDITED_LOC_NAME)
+        self.comboBoxSetToSetting(self.ui.sdCardRootComboBox, DRIVE_LETTER_NAME)
+    
+    def comboBoxSetToSetting(self, comboBox: QtWidgets.QComboBox, settingsKey: str):
+        comboBox.currentTextChanged.connect(
+            lambda txt: self.settings.setValue(settingsKey, txt)
+        )
 
     def loadSettings(self) -> None:
         if self.settings.value(ROOT_NAME):
             self.ui.rootDirectoryPathEdit.setText(self.settings.value(ROOT_NAME))
             self.updateSubdirectories()
 
-            if self.settings.value(EDITED_LOC_NAME):
-                self.setComboBoxFromSetting(self.ui.editedLocationComboBox, self.settings.value(EDITED_LOC_NAME))
-
-            if self.settings.value(JPEG_LOC_NAME):
-                self.setComboBoxFromSetting(self.ui.jpegLocationComboBox, self.settings.value(JPEG_LOC_NAME))
-
-            if self.settings.value(RAW_LOC_NAME):
-                self.setComboBoxFromSetting(self.ui.rawLocationComboBox, self.settings.value(RAW_LOC_NAME))
-
         self.updateDriveLetters()
-
-        if self.settings.value(DRIVE_LETTER_NAME):
-            self.setComboBoxFromSetting(self.ui.sdCardRootComboBox, self.settings.value(DRIVE_LETTER_NAME))
 
     def toggleImportWidgetVisibility(self, action: QtWidgets.QAction, widget: QtWidgets.QWidget) -> None:
         widget.setVisible(action.isChecked())
@@ -104,8 +101,22 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         rootPath = self.settings.value(ROOT_NAME)
         paths = [x for x in listdir(rootPath) if isdir(join(rootPath, x))]
         for comboBox in self.subdirectoryBoxes:
+            try:
+                comboBox.disconnect()
+            except TypeError:
+                pass
             comboBox.clear()
             comboBox.addItems(paths)
+            self.comboBoxSetToSetting(comboBox, self.subdirectoryBoxes[comboBox])
+
+        if self.settings.value(EDITED_LOC_NAME):
+            self.setComboBoxFromSetting(self.ui.editedLocationComboBox, self.settings.value(EDITED_LOC_NAME))
+
+        if self.settings.value(JPEG_LOC_NAME):
+            self.setComboBoxFromSetting(self.ui.jpegLocationComboBox, self.settings.value(JPEG_LOC_NAME))
+
+        if self.settings.value(RAW_LOC_NAME):
+            self.setComboBoxFromSetting(self.ui.rawLocationComboBox, self.settings.value(RAW_LOC_NAME))
 
     def error(self, text):
         self.ui.errorLabel.setText(text)
@@ -113,8 +124,16 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         
     def updateDriveLetters(self):
         drives = [f"{d}:" for d in drive_letters if exists(f"{d}:")]
+        try:
+            self.ui.sdCardRootComboBox.disconnect()
+        except TypeError:
+            pass
         self.ui.sdCardRootComboBox.clear()
         self.ui.sdCardRootComboBox.addItems(drives)
+        self.comboBoxSetToSetting(self.ui.sdCardRootComboBox, DRIVE_LETTER_NAME)
+
+        if self.settings.value(DRIVE_LETTER_NAME):
+            self.setComboBoxFromSetting(self.ui.sdCardRootComboBox, self.settings.value(DRIVE_LETTER_NAME))
 
     @staticmethod
     def setComboBoxFromSetting(comboBox: QtWidgets.QComboBox, setting: str):
