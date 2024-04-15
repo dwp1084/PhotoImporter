@@ -4,13 +4,16 @@ from pathlib import Path
 from string import ascii_uppercase as drive_letters
 
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QDateTime, QSize, QSettings, pyqtSlot, QStandardPaths
+from PyQt5.QtCore import QDateTime, QSize, QSettings, pyqtSlot, QStandardPaths, Qt
 
 from constants import ROOT_NAME, DRIVE_LETTER_NAME, EDITED_LOC_NAME, JPEG_LOC_NAME, RAW_LOC_NAME
+from PhotoImporter import PhotoImporter
 from ui.ui_PhotoImporterMainWindow import Ui_PhotoImporterMainWindow
 
 
 class PhotoImporterMainWindow(QtWidgets.QMainWindow):
+    photoImporter = PhotoImporter()
+
     def __init__(self) -> None:
         super().__init__()
         self.ui = Ui_PhotoImporterMainWindow()
@@ -55,6 +58,17 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.comboBoxSetToSetting(self.ui.rawLocationComboBox, RAW_LOC_NAME)
         self.comboBoxSetToSetting(self.ui.editedLocationComboBox, EDITED_LOC_NAME)
         self.comboBoxSetToSetting(self.ui.sdCardRootComboBox, DRIVE_LETTER_NAME)
+        self.ui.importButton.clicked.connect(self.importPhotos)
+        self.photoImporter.importing.connect(self.importing)
+
+    @pyqtSlot()
+    def importing(self):
+        self.ui.separator.setVisible(True)
+        self.ui.ProgressWidget.setVisible(True)
+        self.ui.OptionsWidget.setEnabled(False)
+        self.ui.menubar.setEnabled(False)
+        self.ui.errorLabel.setVisible(False)
+        QtWidgets.QApplication.setOverrideCursor(Qt.BusyCursor)
     
     def comboBoxSetToSetting(self, comboBox: QtWidgets.QComboBox, settingsKey: str):
         comboBox.currentTextChanged.connect(
@@ -140,3 +154,29 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         index = comboBox.findText(setting)
         if index > -1:
             comboBox.setCurrentIndex(index)
+
+    @pyqtSlot()
+    def importPhotos(self):
+        if self.ui.projectNameEdit.text() == "":
+            self.error("Please enter a project name.")
+            return
+
+        sdCardRoot = self.ui.sdCardRootComboBox.currentText()
+        currentRootDir = self.ui.rootDirectoryPathEdit.text()
+        editedPhotosDir = join(currentRootDir, self.ui.editedLocationComboBox.currentText())
+        jpegPhotosDir = None
+        rawPhotosDir = None
+        if self.ui.actionJPEG.isChecked():
+            jpegPhotosDir = join(currentRootDir, self.ui.jpegLocationComboBox.currentText())
+        if self.ui.actionRAW.isChecked():
+            rawPhotosDir = join(currentRootDir, self.ui.rawLocationComboBox.currentText())
+
+        try:
+            self.photoImporter.validate(sdCardRoot, editedPhotosDir, jpegPhotosDir, rawPhotosDir)
+        except OSError as ose:
+            self.error(str(ose))
+        else:
+            self.photoImporter.importPhotos(
+                self.ui.projectDateEdit.date().toString("yyyyMMdd"),
+                self.ui.projectNameEdit.text()
+            )

@@ -552,7 +552,7 @@
              <item>
               <widget class="QProgressBar" name="totalProgressBar">
                <property name="value">
-                <number>24</number>
+                <number>0</number>
                </property>
               </widget>
              </item>
@@ -571,14 +571,14 @@
              <item>
               <widget class="QLabel" name="label_2">
                <property name="text">
-                <string>CurrentProgress</string>
+                <string>Current Progress</string>
                </property>
               </widget>
              </item>
              <item>
               <widget class="QProgressBar" name="currentFileProgressBar">
                <property name="value">
-                <number>24</number>
+                <number>0</number>
                </property>
               </widget>
              </item>
