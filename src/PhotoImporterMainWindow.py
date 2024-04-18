@@ -13,6 +13,8 @@ from ui.ui_PhotoImporterMainWindow import Ui_PhotoImporterMainWindow
 
 class PhotoImporterMainWindow(QtWidgets.QMainWindow):
     photoImporter = PhotoImporter()
+    operationsToPerform = 0
+    operationsCompleted = 0
 
     def __init__(self) -> None:
         super().__init__()
@@ -35,6 +37,7 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.ui.menuImport.setToolTipsVisible(True)
 
         # Hide panels on startup
+        self.ui.CurrentFileProgressBarWidget.setVisible(False)
         self.ui.separator.setVisible(False)
         self.ui.ProgressWidget.setVisible(False)
         self.ui.errorLabel.setVisible(False)
@@ -60,6 +63,10 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.comboBoxSetToSetting(self.ui.sdCardRootComboBox, DRIVE_LETTER_NAME)
         self.ui.importButton.clicked.connect(self.importPhotos)
         self.photoImporter.importing.connect(self.importing)
+        self.photoImporter.updateNumberOfOperations.connect(self.setNumberOfOperations)
+        self.photoImporter.completedOperation.connect(self.updateProgress)
+        self.photoImporter.statusMessage.connect(self.setStatusMessage)
+        self.photoImporter.importComplete.connect(self.importComplete)
 
     @pyqtSlot()
     def importing(self):
@@ -69,6 +76,12 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.ui.menubar.setEnabled(False)
         self.ui.errorLabel.setVisible(False)
         QtWidgets.QApplication.setOverrideCursor(Qt.BusyCursor)
+
+    @pyqtSlot()
+    def importComplete(self):
+        self.ui.OptionsWidget.setEnabled(True)
+        self.ui.menubar.setEnabled(True)
+        QtWidgets.QApplication.restoreOverrideCursor()
     
     def comboBoxSetToSetting(self, comboBox: QtWidgets.QComboBox, settingsKey: str):
         comboBox.currentTextChanged.connect(
@@ -177,6 +190,19 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
             self.error(str(ose))
         else:
             self.photoImporter.importPhotos(
-                self.ui.projectDateEdit.date().toString("yyyyMMdd"),
+                self.ui.projectDateEdit.date().toPyDate(),
                 self.ui.projectNameEdit.text()
             )
+
+    @pyqtSlot(int)
+    def setNumberOfOperations(self, numberOfOperations):
+        self.operationsToPerform = numberOfOperations
+
+    @pyqtSlot()
+    def updateProgress(self):
+        self.operationsCompleted += 1
+        self.ui.totalProgressBar.setValue(int(self.operationsCompleted / self.operationsToPerform * 100))
+
+    @pyqtSlot(str)
+    def setStatusMessage(self, message):
+        self.ui.currentActionMessage.setText(message)
