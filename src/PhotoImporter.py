@@ -1,7 +1,7 @@
 import datetime as dt
 
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
-from os import mkdir, listdir, walk
+from os import mkdir, listdir, walk, remove
 from os.path import join, exists, isdir, basename
 from shutil import copy2
 from hashlib import sha256
@@ -93,8 +93,9 @@ class PhotoImporter(QObject):
         if self.rawDir != "" and not self.rawPathAlreadyExists:
             self.rawFilesToImport = self._getFileNames(".nef")
 
-        # Update total number of operations for progress bar (copy each file and compare hash of each file)
-        numberOfOperations = (len(self.jpegFilesToImport) + len(self.rawFilesToImport)) * 2
+        # Update total number of operations for progress bar (copy each file, compare hash of each file,
+        # and delete original.)
+        numberOfOperations = (len(self.jpegFilesToImport) + len(self.rawFilesToImport)) * 3
         self.updateNumberOfOperations.emit(numberOfOperations)
 
         self._createThread(self.jpegFilesToImport, self.jpegDir, self.jpegsFinished)
@@ -209,8 +210,13 @@ class PhotoImporterWorker(QObject):
             self.statusMessage.emit(f"Checking hash of {basename(file)}.")
             originalHash = self.getFileHash(file)
             newHash = self.getFileHash(join(self.destination, basename(file)))
+            self.completedOperation.emit()
             if originalHash != newHash:
                 print(f"File {file} not copied correctly")
+            else:
+                # Remove original file only if it was copied over correctly.
+                self.statusMessage.emit(f"Deleting {file}.")
+                remove(file)
             self.completedOperation.emit()
         self.finished.emit()
 

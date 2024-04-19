@@ -82,6 +82,8 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.ui.OptionsWidget.setEnabled(True)
         self.ui.menubar.setEnabled(True)
         QtWidgets.QApplication.restoreOverrideCursor()
+        self.operationsToPerform = 0
+        self.operationsCompleted = 0
     
     def comboBoxSetToSetting(self, comboBox: QtWidgets.QComboBox, settingsKey: str):
         comboBox.currentTextChanged.connect(
@@ -123,6 +125,10 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.settings.setValue(ROOT_NAME, pathName.strip())
         self.updateSubdirectories()
         self.updateDriveLetters()
+        self.ui.ProgressWidget.setVisible(False)
+        self.ui.separator.setVisible(False)
+        self.ui.totalProgressBar.setValue(0)
+        self.ui.currentActionMessage.setText("")
 
     def updateSubdirectories(self):
         rootPath = self.settings.value(ROOT_NAME)
