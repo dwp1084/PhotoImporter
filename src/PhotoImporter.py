@@ -1,4 +1,5 @@
 import datetime as dt
+from collections.abc import Callable
 
 from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
 from os import mkdir, listdir, walk, remove
@@ -10,6 +11,9 @@ from constants import CAMERA_FOLDER_NAME, DATE_FORMAT
 
 
 class PhotoImporter(QObject):
+    """
+    Class that kicks off the photo import process and provides updates to the GUI about its status.
+    """
 
     sdCardRoot = ""
     editedDir = ""
@@ -36,6 +40,16 @@ class PhotoImporter(QObject):
         super().__init__()
 
     def validate(self, sdCardRoot: str, editedDir: str, jpegDir: str | None, rawDir: str | None) -> None:
+        """
+        The validate function checks that the given directories exist and are unique. It also ensures that the
+        sdCardRoot is a valid camera removable storage device.
+
+        :param sdCardRoot: Root directory of the SD card
+        :param editedDir: Directory where edited photos are stored
+        :param jpegDir: Directory where jpeg photos are stored, optional
+        :param rawDir: Directory where raw photos are stored, optional
+        :doc-author: Trelent
+        """
         if not exists(join(sdCardRoot, CAMERA_FOLDER_NAME)):
             raise IOError(f"Drive \"{sdCardRoot}\" not a valid camera removable storage device.")
 
@@ -64,12 +78,47 @@ class PhotoImporter(QObject):
         if rawDir is not None:
             self.rawDir = rawDir
 
-    def importPhotos(self, date: dt.date, projectName: str):
+    def importPhotos(self, date: dt.date, projectName: str) -> None:
+        """
+        The importPhotos function is the main function of this class. It takes a date and project name as arguments,
+        and imports all photos from that day into a folder with the given project name.
+
+        :param date: Specify the date of the project
+        :param projectName: Set the project name
+        :doc-author: Trelent
+        """
         self.projectName = projectName
         self.projectDate = date
         self._importPhotos()
 
-    def _reset(self):
+    @pyqtSlot()
+    def jpegsFinished(self) -> None:
+        """
+        The jpegsFinished function is called when the jpegs have been imported. It creates a thread to import the raw
+        files, and then calls rawsFinished when it's done.
+
+        :doc-author: Trelent
+        """
+        self._createThread(self.rawFilesToImport, self.rawDir, self.rawsFinished)
+
+    @pyqtSlot()
+    def rawsFinished(self) -> None:
+        """
+        The rawsFinished function is called when the raw file import process has completed. It emits a signal to
+        indicate that the import process has finished, and then resets the state of the importer.
+
+        :doc-author: Trelent
+        """
+        self.importComplete.emit()
+        self._reset()
+
+    def _reset(self) -> None:
+        """
+        The _reset function is called after importing is complete. It sets all the class variables to their default
+        values.
+
+        :doc-author: Trelent
+        """
         self.sdCardRoot = ""
         self.editedDir = ""
         self.jpegDir = ""
@@ -85,7 +134,16 @@ class PhotoImporter(QObject):
         self.jpegFilesToImport = []
         self.rawFilesToImport = []
 
-    def _importPhotos(self):
+    def _importPhotos(self) -> None:
+        """
+        The _importPhotos function is the main internal function of this class. It does the following:
+            1. Emits a signal to indicate that importing has begun
+            2. Creates directories for JPEG and RAW files if they don't already exist
+            3. Gets file names from source directory, based on file extension (.jpg/.jpeg for JPEGs, .nef for RAWs) and
+               stores them in lists
+
+        :doc-author: Trelent
+        """
         self.importing.emit()
         self._mkdirs()
         if self.jpegDir != "" and not self.jpegPathAlreadyExists:
@@ -100,16 +158,17 @@ class PhotoImporter(QObject):
 
         self._createThread(self.jpegFilesToImport, self.jpegDir, self.jpegsFinished)
 
-    @pyqtSlot()
-    def jpegsFinished(self):
-        self._createThread(self.rawFilesToImport, self.rawDir, self.rawsFinished)
+    def _createThread(self, filesToImport: list, destination: str, finishedSlot: Callable[[], None]) -> None:
+        """
+        The _createThread function is a helper function that creates a QThread and a PhotoImporterWorker object,
+        connects the worker's signals to slots in this class, and starts the thread. The finishedSlot parameter is used
+        to connect the thread's finished signal to whatever slot you want called when the import is complete.
 
-    @pyqtSlot()
-    def rawsFinished(self):
-        self.importComplete.emit()
-        self._reset()
-
-    def _createThread(self, filesToImport, destination, finishedSlot):
+        :param filesToImport: List of files to import
+        :param destination: Destination folder
+        :param finishedSlot: Slot to be called once the thread has finished executing
+        :doc-author: Trelent
+        """
         self.thread = QThread()
         self.worker = PhotoImporterWorker(filesToImport, destination)
         self.worker.moveToThread(self.thread)
@@ -122,7 +181,14 @@ class PhotoImporter(QObject):
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
 
-    def _mkdirs(self):
+    def _mkdirs(self) -> None:
+        """
+        The _mkdirs function creates destination directories for the edited, jpeg, and raw photos. The directories are
+        created in the following scheme: {root}/{type}/{year}/{date} {projectName}. This function checks if a project
+        of the same name and date was already created so that photos are not imported to folders that already exist. If
+        another project exists from the same date, the function adds a suffix to the date so projects are sorted in the
+        correct order on your filesystem.
+        """
         # Determine if there's a directory for the year
         year = self.projectDate.strftime("%Y")
         yearPath = join(self.editedDir, year)
@@ -171,7 +237,16 @@ class PhotoImporter(QObject):
             else:
                 self.rawPathAlreadyExists = True
 
-    def _getFileNames(self, *extensions):
+    def _getFileNames(self, *extensions: str) -> list:
+        """
+        The _getFileNames function is a helper function that returns a list of all files in the camera folder
+        that match any of the extensions passed to it. It does this by walking through each subdirectory and adding
+        any matching file to its return list.
+
+        :param *extensions: str: Pass a list of strings to the function
+        :return: A list of all files in the sd card's DCIM folder that have one of the given file extensions
+        :doc-author: Trelent
+        """
         sdPath = join(self.sdCardRoot, CAMERA_FOLDER_NAME)
 
         # Get all files and subdirectories
@@ -188,20 +263,26 @@ class PhotoImporter(QObject):
 
 
 class PhotoImporterWorker(QObject):
+    """
+    Worker class for the importing threads, which handle the importing process to keep the GUI responsive.
+    """
+
     completedOperation = pyqtSignal()
     statusMessage = pyqtSignal(str)
     finished = pyqtSignal()
 
-    def __init__(self, filesToImport, destination):
+    def __init__(self, filesToImport: list, destination: str) -> None:
         super().__init__()
         self.filesToImport = filesToImport
         self.destination = destination
 
-    def changeSettings(self, filesToImport, destination):
-        self.filesToImport = filesToImport
-        self.destination = destination
-
-    def run(self):
+    def run(self) -> None:
+        """
+        This function handles the thread execution. It imports each file from the file import list to the destination
+        folder, compares the hashes of both files to ensure that the file was imported correctly, then deletes the file
+        from the SD card if the hashes match. It also emits signals to update the GUI with the current status of the
+        thread execution and update the progress bar.
+        """
         for file in self.filesToImport:
             self.statusMessage.emit(f"Copying {basename(file)} to {self.destination}.")
             copy2(file, self.destination)
@@ -221,7 +302,14 @@ class PhotoImporterWorker(QObject):
         self.finished.emit()
 
     @staticmethod
-    def getFileHash(path):
+    def getFileHash(path: str) -> bytes:
+        """
+        The getFileHash function takes a path to a file and returns the SHA256 hash of that file.
+
+        :param path: File path
+        :return: The sha256 hash of the file
+        :doc-author: Trelent
+        """
         chunk_size = 1024 * 1024
 
         with open(path, "rb") as file:
