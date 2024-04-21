@@ -1,0 +1,1 @@
+pyinstaller.exe --noconsole --onedir --name "Photo Importer" .\src\main.py
