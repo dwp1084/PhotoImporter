@@ -1,7 +1,7 @@
 import datetime as dt
 from collections.abc import Callable
 
-from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
+from PyQt6.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
 from os import mkdir, listdir, walk, remove
 from os.path import join, exists, isdir, basename
 from shutil import copy2

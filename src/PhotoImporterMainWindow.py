@@ -3,8 +3,8 @@ from os.path import exists, join, isdir
 from pathlib import Path
 from string import ascii_uppercase as drive_letters
 
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QDateTime, QSize, QSettings, pyqtSlot, QStandardPaths, Qt
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import QDateTime, QSize, QSettings, pyqtSlot, QStandardPaths, Qt
 
 from constants import ROOT_NAME, DRIVE_LETTER_NAME, EDITED_LOC_NAME, JPEG_LOC_NAME, RAW_LOC_NAME
 from PhotoImporter import PhotoImporter
@@ -32,9 +32,9 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
             self.ui.rawLocationComboBox: RAW_LOC_NAME
         }
 
-        appConfig = (QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation) + "/PhotoImporter/config.ini")
+        appConfig = (QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppConfigLocation) + "/PhotoImporter/config.ini")
 
-        self.settings = QSettings(appConfig, QSettings.IniFormat)
+        self.settings = QSettings(appConfig, QSettings.Format.IniFormat)
         self.loadSettings()
 
         self.ui.menuSettings.setToolTipsVisible(True)
@@ -104,7 +104,7 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
         self.ui.OptionsWidget.setEnabled(False)
         self.ui.menubar.setEnabled(False)
         self.ui.errorLabel.setVisible(False)
-        QtWidgets.QApplication.setOverrideCursor(Qt.BusyCursor)
+        QtWidgets.QApplication.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
     @pyqtSlot()
     def importComplete(self) -> None:
@@ -214,7 +214,7 @@ class PhotoImporterMainWindow(QtWidgets.QMainWindow):
 
         self.updateDriveLetters()
 
-    def toggleImportWidgetVisibility(self, action: QtWidgets.QAction, widget: QtWidgets.QWidget) -> None:
+    def toggleImportWidgetVisibility(self, action: QtWidgets.QWidgetAction, widget: QtWidgets.QWidget) -> None:
         """
         The toggleImportWidgetVisibility function is a function that toggles the visibility of the import widget. It
         also ensures that at least one value is always checked.
