@@ -222,6 +222,8 @@ class PhotoImporter(QObject):
         if self.jpegDir != "":
             yearPath = join(self.jpegDir, year)
             jpegPath = join(yearPath, baseDirectory)
+            if not isdir(yearPath):
+                mkdir(yearPath)
             if not isdir(jpegPath):
                 mkdir(jpegPath)
                 self.jpegDir = jpegPath
@@ -231,6 +233,8 @@ class PhotoImporter(QObject):
         if self.rawDir != "":
             yearPath = join(self.rawDir, f"R{year}")
             rawPath = join(yearPath, f"R{baseDirectory}")
+            if not isdir(yearPath):
+                mkdir(yearPath)
             if not isdir(rawPath):
                 mkdir(rawPath)
                 self.rawDir = rawPath
